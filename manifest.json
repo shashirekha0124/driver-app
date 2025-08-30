@@ -1,25 +1,23 @@
 {
-  "name": "Ward Vehicle Tracking",
-  "short_name": "WardTrack",
-  "start_url": "./index.html",
+  "name": "Garbage Complaint App",
+  "short_name": "GarbageApp",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0066cc",
-  "description": "Real-time vehicle tracking for wards with map visualization.",
-  "orientation": "portrait-primary",
-  "scope": "./",
+  "theme_color": "#0d6efd",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ]
 }
+
 
