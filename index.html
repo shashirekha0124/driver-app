@@ -5,7 +5,6 @@
   <title>SWM Driver App – Anti Route Deviation</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
-  <link rel="manifest" href="manifest.json">
   <script src="https://js.arcgis.com/4.29/"></script>
   <style>
     html, body { height: 100%; width: 100%; margin: 0; }
@@ -67,7 +66,7 @@
     ], function (Map, MapView, Point, Polygon, Polyline, Graphic, geometryEngine) {
 
       // === CONFIG ===
-      const API_URL = "https://dsclitsapi.karnatakasmartcity.in/ITMSCiscoPG/VehicleCurrentStatus?RequestToken=MTI4eUlxREpPYk9UaklWenliSHYzY3gwa2R5R3dVMm0yWndFbWVkYVhKZz0kaXRtcyQwNi0wOS0yMDI1IDE0OjU4OjA4";
+      const API_URL = "https://dsclitsapi.karnatakasmartcity.in/ITMSCiscoPG/VehicleCurrentStatus?RequestToken=M3dOK2pkK0lOdjd3dUlvUTA2UEVJbldjdHdFOTRGaUhYOUxwMHJBQ3VUUT0kaXRtcyQwNi0wOS0yMDI1IDExOjQzOjI1"
       const ROUTE_BUFFER_METERS = 25; // allowable deviation from route
 
       // === UI HANDLES ===
@@ -378,25 +377,6 @@
         wardFillGraphic, routeBufferGraphic, routeLineGraphic1, routeLineGraphic2,
         startPointGraphic, endPointGraphic, startPointGraphic2, endPointGraphic2
       ]);
-// === Mapping wards to routes (start/end points) ===
-const wardRoutes = {
-  "Ward22-A": {
-    start: { lon: 75.902828, lat: 14.464268 },
-    end:   { lon: 75.902769, lat: 14.463531 }
-  },
-  "Ward22-B": {
-    start: { lon: 75.909513, lat: 14.464849 },
-    end:   { lon: 75.909792, lat: 14.465896 }
-  },
-  "Ward3": {
-    start: { lon: 75.910000, lat: 14.466000 },
-    end:   { lon: 75.911000, lat: 14.467000 }
-  },
-  "Ward4": {
-    start: { lon: 75.912000, lat: 14.468000 },
-    end:   { lon: 75.913000, lat: 14.469000 }
-  }
-};
 
       // === VEHICLE MARKER ===
       let vehicleGraphic = null;
@@ -441,7 +421,7 @@ const wardRoutes = {
     if (!vehicleGraphic) {
       vehicleGraphic = new Graphic({
         geometry: { type: "point", longitude: lon, latitude: lat },
-        symbol: { type: "simple-marker", color: "red", size: "12px", outline: { color: "white", width: 1 } },
+        symbol: { type: "picture-marker", url: "./veh.png", width: "24px", height:"24px" },
         popupTemplate: { title: selectedVehicle, content: `Lat: ${lat}<br>Lon: ${lon}` }
       });
       view.graphics.add(vehicleGraphic);
@@ -481,44 +461,17 @@ const wardRoutes = {
       }
 
       // === EVENTS / CONTROLS ===
-      wardSelect.addEventListener("change", function () {
-  const selectedWard = wardSelect.value;
+      wardSelect.addEventListener("change", () => {
+        // In future, load different ward geometry here.
+        // For now we only have Ward 1 hardcoded.
+        view.goTo(ward1Polygon.extent.expand(1.2));
+        setStatus("Ward 1 loaded");
+      });
 
-  // Update vehicle number
-  if (selectedWard && wardToVehicle[selectedWard]) {
-    vehicleNumberInput.value = wardToVehicle[selectedWard];
-    console.log("Selected Vehicle:", wardToVehicle[selectedWard]);
-  } else {
-    vehicleNumberInput.value = "";
-  }
+      recenterBtn.addEventListener("click", () => {
+        if (vehicleGraphic) view.goTo({ center: vehicleGraphic.geometry, zoom: 17 });
+      });
 
-  // Remove old start/end markers
-  view.graphics.removeAll();
-
-  // Always redraw ward + routes
-  view.graphics.addMany([wardFillGraphic, routeBufferGraphic, routeLineGraphic1, routeLineGraphic2]);
-
-  // Add start/end markers for this ward
-  if (selectedWard && wardRoutes[selectedWard]) {
-    const { start, end } = wardRoutes[selectedWard];
-
-    const startGraphic = new Graphic({
-      geometry: new Point({ longitude: start.lon, latitude: start.lat }),
-      symbol: { type: "simple-marker", color: "green", size: "10px" }
-    });
-
-    const endGraphic = new Graphic({
-      geometry: new Point({ longitude: end.lon, latitude: end.lat }),
-      symbol: { type: "simple-marker", color: "red", size: "10px" }
-    });
-
-    view.graphics.addMany([startGraphic, endGraphic]);
-    setStatus(`${selectedWard}: Start & End points displayed`, "ok");
-
-    // Zoom into ward
-    view.goTo(ward1Polygon.extent.expand(1.2));
-  }
-});
       // Initial view
       view.when(() => {
         view.goTo(ward1Polygon.extent.expand(1.2));
@@ -527,77 +480,6 @@ const wardRoutes = {
         setInterval(() => { loadVehicle(); }, REFRESH_MS);
       });
     });
-async function fetchToken() {
-  try {
-    const response = await fetch("https://dsclitsapi.karnatakasmartcity.in/ITMSVehicleTripsUpdate/AuthenticateUser", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        strUserName: "itms",
-        strPassword: "Itms@123"
-      })
-    });
-
-    if (!response.ok) throw new Error("Network response was not ok");
-
-    const data = await response.json();
-    console.log("Token:", data.token);
-    return data.token;
-
-  } catch (error) {
-    console.error("Error fetching token:", error);
-  }
-}
-	 const routeUrl = "https://router.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World";
-
-      // ✅ 4. Click event: Check inside/outside & route from ward center
-      view.on("click", function(event) {
-        graphicsLayer.removeAll();
-        graphicsLayer.add(ward1Graphic);
-
-        const pointGraphic = new Graphic({
-          geometry: event.mapPoint,
-          symbol: {
-            type: "simple-marker",
-            color: geometryEngine.contains(ward1Polygon, event.mapPoint) ? "green" : "red",
-            size: "12px"
-          }
-        });
-
-        graphicsLayer.add(pointGraphic);
-
-        // Route from Ward1 centroid to clicked point
-        const centroid = ward1Polygon.extent.center;
-        const routeParams = new RouteParameters({
-          stops: new FeatureSet({
-            features: [
-              new Graphic({ geometry: centroid }),
-              new Graphic({ geometry: event.mapPoint })
-            ]
-          }),
-          returnDirections: true
-        });
-
-        route.solve(routeUrl, routeParams).then(function(data) {
-          if (data.routeResults.length > 0) {
-            const routeGraphic = new Graphic({
-              geometry: data.routeResults[0].route.geometry,
-              symbol: {
-                type: "simple-line",
-                color: [0, 0, 0, 0.8],
-                width: 3
-              }
-            });
-            graphicsLayer.add(routeGraphic);
-          }
-        }).catch(err => {
-          console.error("Routing error:", err);
-        });
-      });
   </script>
 </body>
 </html>
-
-
-
-
