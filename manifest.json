@@ -1,7 +1,8 @@
 {
   "name": "Garbage Complaint App",
   "short_name": "GarbageApp",
-  "start_url": "/index.html",
+  "start_url": "/driver-app/index.html",
+  "scope": "/driver-app/"
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0d6efd",
@@ -19,6 +20,7 @@
     }
   ]
 }
+
 
 
 
