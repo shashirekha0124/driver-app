@@ -1,32 +1,29 @@
-const CACHE_NAME = 'driver-app-cache-v1';
+const CACHE_NAME = 'swm-app-cache-v1';
 const PRECACHE_URLS = [
-  '/driver-app/',
-  '/driver-app/index.html',
-  '/driver-app/manifest.json',
-  '/driver-app/icon-192x192.png',
-  '/driver-app/icon-512x512.png'
-  // Add more assets if needed, like CSS/JS files
-  // '/driver-app/styles.css',
-  // '/driver-app/script.js',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  // Add other assets, such as images/icons
+  // '/images/logo.png',
+  // '/offline.html',
 ];
 
-// Install event: cache files for offline use
+// Install event: cache key files for offline mode
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(PRECACHE_URLS))
   );
   self.skipWaiting();
 });
 
-// Activate event: clear old caches
+// Activate event: clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames =>
       Promise.all(
         cacheNames.map(name => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
+          if (name !== CACHE_NAME) return caches.delete(name);
         })
       )
     )
@@ -34,18 +31,19 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch event: serve from cache, fallback to network
+// Intercept network requests
 self.addEventListener('fetch', event => {
-  // Navigation requests (e.g. user typing URL, refreshing)
+  // For navigation requests, show offline page if offline
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/driver-app/index.html'))
+      fetch(event.request)
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
-
-  // Other requests (icons, manifest, etc.)
+  // For other requests, try cache first, then network
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
   );
 });
