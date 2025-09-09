@@ -3,8 +3,8 @@ const PRECACHE_URLS = [
   '/',
  './index.html',
   './manifest.json',
-  './icon-192x192.png',
-  './icon-512x512.png'
+  'icons/icon-192x192.png',
+  'icons/icon-512x512.png'
   // Add other assets, such as images/icons
   // '/images/logo.png',
   // '/offline.html',
@@ -49,5 +49,6 @@ self.addEventListener('fetch', event => {
       .then(response => response || fetch(event.request))
   );
 });
+
 
 
